@@ -1,0 +1,2 @@
+man(adam).
+?- man(X).

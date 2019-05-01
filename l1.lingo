@@ -1,11 +1,16 @@
 language = osn program:p query:q { Language(:p, :q) };
 program = term:t "." osn { :t };
-query = "?-" osn term:t osn { :t };
+query = "?-" osn term:t osn "." osn { :t };
 
 
-term = functor | var;
-functor = (lowcase+)$name osn "(" osn  ")" osn {  };
+term = functor | constFunctor | var;
+functor = fname$n osn "(" term:h (nextTerm*):t ")" osn { Functor($n, consArray(:h, :t)) };
+constFunctor = fname$n { Functor($n, emptyArray()) };
+fname = (lowcase+);
+
+nextTerm = "," osn term:t { :t };
 lowcase = ('a'-'z');
-var = ('A' - 'Z');
+var = ('A' - 'Z')$s osn { Var($s) };
 osn = spacen*;
 spacen = space | '\n' | '\u000d';
+space = ' ' | '\t';

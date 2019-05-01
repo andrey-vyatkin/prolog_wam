@@ -1,13 +1,31 @@
 import runtime;
+import lingo/pegcode/driver;
 
-// heap : [Cell] = [];
+// syntax
+Language(program : L1Term, Query : L1Term);
+L1Term ::= Var, Functor;
+Var(name : string);
+Functor(name : string, args : [L1Term]);
 
-// Cell ::= Ref;
-// Ref(addr : int);
 
-Language(program : Term, Query : Term);
-Term(name : string, args : [Term]);
+grammar : ref Maybe<[PegOp]> = ref None();
+
+parseProgram(file : string) -> Language {
+	untriple(parsic3(
+		onlyOnce(grammar, \ -> compilePegGrammar("#include l1.lingo")),
+		getFileContent(file),
+		SemanticActions(defaultPegActions.t),
+		Language(Var("X"), Var("X"))
+	), \result, _, error -> {
+		if (error != "") {
+			println("Error occured during parsing file " + file + " : " + error);
+			quit(1);
+		}
+		result
+	})
+}
 
 main() {
-	println("Nothing");
+	println(parseProgram("./test.pl"));
+	quit(0);
 }
