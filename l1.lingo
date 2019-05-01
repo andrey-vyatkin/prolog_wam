@@ -1,0 +1,11 @@
+language = osn program:p query:q { Language(:p, :q) };
+program = term:t "." osn { :t };
+query = "?-" osn term:t osn { :t };
+
+
+term = functor | var;
+functor = (lowcase+)$name osn "(" osn  ")" osn {  };
+lowcase = ('a'-'z');
+var = ('A' - 'Z');
+osn = spacen*;
+spacen = space | '\n' | '\u000d';

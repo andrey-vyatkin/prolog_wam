@@ -1,0 +1,13 @@
+import runtime;
+
+// heap : [Cell] = [];
+
+// Cell ::= Ref;
+// Ref(addr : int);
+
+Language(program : Term, Query : Term);
+Term(name : string, args : [Term]);
+
+main() {
+	println("Nothing");
+}
