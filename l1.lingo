@@ -4,8 +4,8 @@ query = "?-" osn term:t osn "." osn { :t };
 
 
 term = functor | constFunctor | var;
-functor = fname$n osn "(" term:h (nextTerm*):t ")" osn { Functor($n, consArray(:h, :t)) };
-constFunctor = fname$n { Functor($n, emptyArray()) };
+functor = fname$n osn "(" term:h (nextTerm*):t ")" osn { FunctorApp($n, consArray(:h, :t)) };
+constFunctor = fname$n { FunctorApp($n, emptyArray()) };
 fname = (lowcase+);
 
 nextTerm = "," osn term:t { :t };

@@ -1,16 +1,22 @@
-import runtime;
 import lingo/pegcode/driver;
 
 // syntax
 Language(program : L1Term, Query : L1Term);
-L1Term ::= Var, Functor;
+L1Term ::= Var, FunctorApp;
 Var(name : string);
-Functor(name : string, args : [L1Term]);
+FunctorApp(name : string, args : [L1Term]);
+
+// VM
+Heap(cells : [Cell]);
+Cell ::= RefCell, StructCell, FunctorCell;
+RefCell(heapi : int);
+StructCell(heapi : int);
+FunctorCell(name : string, arity : int);
 
 
 grammar : ref Maybe<[PegOp]> = ref None();
 
-parseProgram(file : string) -> Language {
+parseProlog(file : string) -> Language {
 	untriple(parsic3(
 		onlyOnce(grammar, \ -> compilePegGrammar("#include l1.lingo")),
 		getFileContent(file),
@@ -25,7 +31,38 @@ parseProgram(file : string) -> Language {
 	})
 }
 
+
+HeapLayoutState(functorRef : Tree<FunctorCell, int>, varRef : Tree<string, int>, cells : [Cell]);
+initHeapLayoutState() { HeapLayoutState(makeTree(), makeTree(), []); }
+
+// simplest layout for data in heap f(X, g(Y,X)) -> s1 f/2 
+heapLayout(term : L1Term, state : HeapLayoutState) -> HeapLayoutState {
+	cellNum = length(state.cells);
+
+	switch (term) {
+		Var(name) : {
+			eitherFn(
+				lookupTree(state.varRef, name),
+				\idx -> HeapLayoutState(state with cells=arrayPush(state.cells, RefCell(idx))),
+				\ -> HeapLayoutState(
+					state.functorRef,
+					setTree(state.varRef, name, cellNum),
+					arrayPush(state.cells, RefCell(cellNum)) 
+				)
+			)
+		}
+		FunctorApp(name, args) : {
+			fcell = FunctorCell(name, length(args));
+			updCells = concat(
+				state.cells, 
+				eitherMap(lookupTree(state.functorRef, fcell), \i -> [StructCell(i)], [StructCell(cellNum+1), fcell])
+			);
+			fold(args, HeapLayoutState(state with cells = updCells), \st, t -> heapLayout(t, st));
+		}
+	}
+}
+
 main() {
-	println(parseProgram("./test.pl"));
+	println(heapLayout(parseProlog("./test.pl").program, initHeapLayoutState()).cells);
 	quit(0);
 }
